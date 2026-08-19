@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор материалов | Береза</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .calculator {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+        h2 { margin: 0 0 5px 0; text-align: center; color: #1e3c5c; font-size: 22px; }
+        .subtitle { text-align: center; color: #666; font-size: 13px; margin-bottom: 20px; }
+        .field { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; margin-bottom: 5px; color: #333; font-size: 14px; }
+        .room-block {
+            background: #f8f9fa;
+            padding: 10px 12px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border-left: 3px solid #dee2e6;
+        }
+        .room-header {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        .room-inputs {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .room-inputs > div {
+            flex: 1;
+        }
+        .room-inputs label {
+            font-size: 10px;
+            font-weight: 500;
+            color: #888;
+            margin-bottom: 2px;
+        }
+        .room-inputs input {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: center;
+            font-weight: 600;
+            box-sizing: border-box;
+        }
+        .room-inputs input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        .total-area {
+            background: #eaf4fd;
+            padding: 10px 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 700;
+            color: #1a5276;
+            margin: 10px 0;
+            font-size: 15px;
+        }
+        .slider-container { position: relative; width: 100%; margin: 5px 0 8px 0; }
+        input[type="range"] {
+            -webkit-appearance: none; width: 100%; height: 10px; border-radius: 5px; outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 28px; height: 28px; border-radius: 50%;
+            background: white; border: 3px solid #2c3e50; cursor: pointer;
+        }
+        .slider-quality { background: linear-gradient(to right, #95a5a6 0%, #95a5a6 33%, #3498db 33%, #3498db 66%, #f1c40f 66%, #f1c40f 100%); }
+        .slider-labels { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; color: #555; }
+        .slider-labels span { text-align: center; }
+        .active-label { text-align: center; font-size: 13px; font-weight: 700; padding: 6px; border-radius: 6px; margin-bottom: 5px; }
+        .label-eco { background: #eaeded; color: #566573; }
+        .label-std { background: #d6eaf8; color: #1a5276; }
+        .label-vip { background: #fef9e7; color: #7d6608; }
+        .result-box {
+            background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 12px;
+            padding: 20px; margin-top: 20px;
+        }
+        .result-box h3 { margin: 0 0 15px 0; color: #1e3c5c; font-size: 18px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; }
+        table td { padding: 8px 5px; border-bottom: 1px solid #e9ecef; font-size: 13px; }
+        table td:last-child { text-align: right; font-weight: 700; color: #1e3c5c; }
+        table tr:last-child td { border-bottom: none; }
+        .total-row td { font-weight: 700; font-size: 15px; border-top: 2px solid #dee2e6 !important; }
+        button {
+            background: #3498db; color: white; border: none; padding: 14px; width: 100%;
+            font-size: 16px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px;
+        }
+        button:hover { background: #2980b9; }
+        .note { font-size: 11px; color: #888; margin-top: 10px; text-align: center; font-style: italic; }
+        select {
+            width: 100%; padding: 10px; border: 2px solid #dee2e6; border-radius: 8px;
+            font-size: 14px; background: #fafafa;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>📦 Калькулятор материалов</h2>
+        <div class="subtitle">Электромонтаж | По комнатам</div>
+
+        <!-- ТИП ОБЪЕКТА -->
+        <div class="field">
+            <label>🏠 Тип объекта</label>
+            <select id="typeSelect">
+                <option value="flat">🏢 Квартира</option>
+                <option value="house">🏠 Частный дом</option>
+            </select>
+        </div>
+
+        <!-- КОМНАТЫ -->
+        <div class="field">
+            <label>📐 Помещения</label>
+            <div id="roomsContainer"></div>
+            <div class="total-area">
+                Общая площадь: <span id="totalAreaDisplay">0</span> м²
+                &nbsp;|&nbsp;
+                Всего точек: <span id="totalPointsDisplay">0</span>
+            </div>
+        </div>
+
+        <!-- КЛАСС ОБЪЕКТА -->
+        <div class="field">
+            <label>📊 Класс объекта</label>
+            <div class="slider-container">
+                <input type="range" id="qualitySlider" class="slider-quality" min="1" max="3" value="2" step="1">
+                <div class="slider-labels"><span>Эконом</span><span>Стандарт</span><span>VIP</span></div>
+            </div>
+            <div id="qualityLabel" class="active-label label-std">📊 Стандарт</div>
+        </div>
+
+        <button onclick="calculate()">📊 Рассчитать материалы</button>
+
+        <div class="result-box" id="resultBox" style="display: none;">
+            <h3>📋 Список материалов</h3>
+            <table id="materialsTable"></table>
+            <div class="note">* Расчёт примерный. Точная смета после осмотра объекта.</div>
+        </div>
+    </div>
+
+    <script>
+        const ROOMS = [
+            { id: 'kitchen', name: '🍳 Кухня', defaultArea: 10, defaultRozetki: 6, defaultVykl: 1, defaultSvet: 2 },
+            { id: 'living', name: '🛋 Гостиная', defaultArea: 20, defaultRozetki: 5, defaultVykl: 2, defaultSvet: 2 },
+            { id: 'bedroom', name: '🛏 Спальня', defaultArea: 14, defaultRozetki: 3, defaultVykl: 1, defaultSvet: 1 },
+            { id: 'bedroom2', name: '🛏 Спальня 2', defaultArea: 12, defaultRozetki: 3, defaultVykl: 1, defaultSvet: 1 },
+            { id: 'kids', name: '🧸 Детская', defaultArea: 12, defaultRozetki: 4, defaultVykl: 1, defaultSvet: 2 },
+            { id: 'bath', name: '🛁 Ванная', defaultArea: 5, defaultRozetki: 2, defaultVykl: 1, defaultSvet: 2 },
+            { id: 'toilet', name: '🚽 Туалет', defaultArea: 2, defaultRozetki: 1, defaultVykl: 1, defaultSvet: 1 },
+            { id: 'corridor', name: '🚪 Коридор', defaultArea: 8, defaultRozetki: 2, defaultVykl: 2, defaultSvet: 2 },
+            { id: 'hall', name: '🧥 Прихожая', defaultArea: 6, defaultRozetki: 2, defaultVykl: 1, defaultSvet: 1 },
+        ];
+
+        const COEF = {
+            cablePerPoint: { eco: 8, std: 10, vip: 13 },  // метров кабеля на 1 точку
+            houseBonus: 1.2,
+            gofraPercent: 0.3,
+            dyubelPerMeter: 2.5,
+            alebastrPerPodrozetnik: 0.03,
+            avtomatPerArea: { eco: 0.15, std: 0.2, vip: 0.3 },
+            uzoPerAvtomat: 0.15,
+            korobkiPerArea: 0.1,
+            wagoPerKorobka: 3,
+            wagoPerPoint: 2,
+        };
+
+        const container = document.getElementById('roomsContainer');
+
+        ROOMS.forEach(room => {
+            const div = document.createElement('div');
+            div.className = 'room-block';
+            div.innerHTML = `
+                <div class="room-header">${room.name}</div>
+                <div class="room-inputs">
+                    <div>
+                        <label>Площадь (м²)</label>
+                        <input type="number" id="area_${room.id}" value="${room.defaultArea}" min="0" max="200" step="0.5">
+                    </div>
+                    <div>
+                        <label>Розетки</label>
+                        <input type="number" id="rozetki_${room.id}" value="${room.defaultRozetki}" min="0" max="100">
+                    </div>
+                    <div>
+                        <label>Выключатели</label>
+                        <input type="number" id="vykl_${room.id}" value="${room.defaultVykl}" min="0" max="50">
+                    </div>
+                    <div>
+                        <label>Светильники</label>
+                        <input type="number" id="svet_${room.id}" value="${room.defaultSvet}" min="0" max="50">
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+
+            ['area', 'rozetki', 'vykl', 'svet'].forEach(param => {
+                document.getElementById(`${param}_${room.id}`).addEventListener('input', () => {
+                    updateTotals();
+                    calculate();
+                });
+            });
+        });
+
+        function updateTotals() {
+            let totalArea = 0;
+            let totalPoints = 0;
+            ROOMS.forEach(room => {
+                totalArea += parseFloat(document.getElementById(`area_${room.id}`).value) || 0;
+                totalPoints += parseInt(document.getElementById(`rozetki_${room.id}`).value) || 0;
+                totalPoints += parseInt(document.getElementById(`vykl_${room.id}`).value) || 0;
+                totalPoints += parseInt(document.getElementById(`svet_${room.id}`).value) || 0;
+            });
+            document.getElementById('totalAreaDisplay').innerText = totalArea;
+            document.getElementById('totalPointsDisplay').innerText = totalPoints;
+        }
+
+        const qualitySlider = document.getElementById('qualitySlider');
+        const qualityLabel = document.getElementById('qualityLabel');
+        const qualityNames = {
+            1: ['📊 Эконом', 'label-eco'],
+            2: ['📊 Стандарт', 'label-std'],
+            3: ['📊 VIP', 'label-vip']
+        };
+        qualitySlider.addEventListener('input', () => {
+            const val = parseInt(qualitySlider.value);
+            qualityLabel.textContent = qualityNames[val][0];
+            qualityLabel.className = 'active-label ' + qualityNames[val][1];
+            calculate();
+        });
+
+        document.getElementById('typeSelect').addEventListener('change', calculate);
+
+        function calculate() {
+            const quality = parseInt(qualitySlider.value);
+            const qualityKey = quality === 1 ? 'eco' : quality === 2 ? 'std' : 'vip';
+            const type = document.getElementById('typeSelect').value;
+            const houseMultiplier = type === 'house' ? COEF.houseBonus : 1;
+
+            let totalArea = 0;
+            let totalRozetki = 0;
+            let totalVykl = 0;
+            let totalSvet = 0;
+
+            ROOMS.forEach(room => {
+                totalArea += parseFloat(document.getElementById(`area_${room.id}`).value) || 0;
+                totalRozetki += parseInt(document.getElementById(`rozetki_${room.id}`).value) || 0;
+                totalVykl += parseInt(document.getElementById(`vykl_${room.id}`).value) || 0;
+                totalSvet += parseInt(document.getElementById(`svet_${room.id}`).value) || 0;
+            });
+
+            if (totalArea <= 0 && totalRozetki <= 0 && totalSvet <= 0) {
+                document.getElementById('resultBox').style.display = 'none';
+                return;
+            }
+
+            const totalPoints = totalRozetki + totalVykl + totalSvet;
+
+            // Кабель
+            const cableTotal = Math.round(totalPoints * COEF.cablePerPoint[qualityKey] * houseMultiplier);
+            const cableRozetki = Math.round(cableTotal * 0.65);
+            const cableSvet = Math.round(cableTotal * 0.35);
+
+            // Подрозетники
+            const podrozetniki = Math.round((totalRozetki + totalVykl) * 1.1);
+
+            // Коробки
+            const korobki = Math.max(1, Math.round(totalArea * COEF.korobkiPerArea));
+            const wago = Math.round(korobki * COEF.wagoPerKorobka + totalPoints * COEF.wagoPerPoint);
+
+            // Гофра и крепёж
+            const gofra = Math.round(cableTotal * COEF.gofraPercent);
+            const dyubel = Math.round(cableTotal * COEF.dyubelPerMeter);
+            const alebastr = Math.max(1, Math.ceil(podrozetniki * COEF.alebastrPerPodrozetnik));
+
+            // Щит
+            const avtomaty = Math.max(6, Math.round(totalArea * COEF.avtomatPerArea[qualityKey]));
+            const uzo = Math.max(1, Math.round(avtomaty * COEF.uzoPerAvtomat));
+
+            const materials = [
+                { name: 'Кабель ВВГнг 3×2,5 (розетки)', qty: cableRozetki, unit: 'м' },
+                { name: 'Кабель ВВГнг 3×1,5 (свет)', qty: cableSvet, unit: 'м' },
+            ];
+
+            if (type === 'house') {
+                materials.push({ name: 'Кабель ВВГнг 3×6 (ввод)', qty: 15, unit: 'м' });
+            }
+
+            materials.push(
+                { name: 'Розетки', qty: totalRozetki, unit: 'шт.' },
+                { name: 'Выключатели', qty: totalVykl, unit: 'шт.' },
+                { name: 'Светильники', qty: totalSvet, unit: 'шт.' },
+                { name: 'Подрозетники', qty: podrozetniki, unit: 'шт.' },
+                { name: 'Распаячные коробки', qty: korobki, unit: 'шт.' },
+                { name: 'Клеммы WAGO', qty: wago, unit: 'шт.' },
+                { name: 'Гофра', qty: gofra, unit: 'м' },
+                { name: 'Дюбель-хомут', qty: dyubel, unit: 'шт.' },
+                { name: 'Алебастр (мешки 30 кг)', qty: alebastr, unit: 'шт.' },
+                { name: 'Автоматы', qty: avtomaty, unit: 'шт.' },
+                { name: 'УЗО 30 мА', qty: uzo, unit: 'шт.' },
+                { name: 'Щит распределительный', qty: 1, unit: 'шт.' }
+            );
+
+            if (type === 'house') {
+                materials.push({ name: 'Автомат вводной 32А', qty: 1, unit: 'шт.' });
+            }
+
+            let tableHTML = '';
+            materials.forEach(item => {
+                tableHTML += `<tr><td>${item.name}</td><td>${item.qty} ${item.unit}</td></tr>`;
+            });
+            tableHTML += `<tr class="total-row"><td>Всего позиций</td><td>${materials.length}</td></tr>`;
+
+            document.getElementById('materialsTable').innerHTML = tableHTML;
+            document.getElementById('resultBox').style.display = 'block';
+        }
+
+        updateTotals();
+        calculate();
+    </script>
+</body>
+</html>
